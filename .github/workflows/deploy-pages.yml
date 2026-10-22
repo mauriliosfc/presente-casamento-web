@@ -29,6 +29,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Build site
         run: npm run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:3000' }}
       - name: Support direct links on GitHub Pages
         run: cp dist/index.html dist/404.html
       - name: Configure Pages

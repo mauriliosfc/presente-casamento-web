@@ -23,3 +23,7 @@ Configure `VITE_API_URL` para a origem da API (padrão local `http://localhost:3
 ## Limite explícito
 
 Não há integração de pagamento. A mensalidade da plataforma e os pagamentos dos presentes serão avaliados em fase futura. A tela pública informa que intenção não é pagamento e não há compra/entrega de item físico.
+
+## GitHub Pages
+
+O frontend é publicado automaticamente em `https://mateusechoesdigital.github.io/presente-casamento-web/` quando há um push para `main`. Para conectar uma API hospedada, cadastre a variável `VITE_API_URL` em **Settings → Secrets and variables → Actions → Variables** do repositório. Sem essa configuração, o frontend usa `http://localhost:3000`, que só funciona para desenvolvimento local.

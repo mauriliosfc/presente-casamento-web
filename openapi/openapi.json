@@ -753,6 +753,37 @@
         ]
       }
     },
+    "/lists/{listId}/assets/preview": {
+      "get": {
+        "operationId": "UploadsController_preview",
+        "parameters": [
+          {
+            "name": "listId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "blob",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
     "/lists/{listId}/assets/public": {
       "get": {
         "operationId": "UploadsController_image",

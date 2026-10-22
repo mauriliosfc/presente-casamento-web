@@ -41,6 +41,7 @@ export const api = {
   resendRsvpConfirmation: (slug: string, guestEmail: string) => request<{ accepted: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps/resend-confirmation`, { method: 'POST', body: JSON.stringify({ guestEmail } satisfies ResendRsvpConfirmationInput) }),
   confirmRsvp: (slug: string, guestEmail: string, code: string) => request<{ confirmed: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps/confirm`, { method: 'POST', body: JSON.stringify({ guestEmail, code } satisfies ConfirmRsvpInput) }),
   imageUrl: (listId: string, blob: string) => `${API}/lists/${encodeURIComponent(listId)}/assets/public?blob=${encodeURIComponent(blob)}`,
+  imagePreviewUrl: async (listId: string, blob: string) => (await request<{ url: string }>(`/lists/${encodeURIComponent(listId)}/assets/preview?blob=${encodeURIComponent(blob)}`)).url,
   upload: async (listId: string, file: File, giftId?: string) => { const form = new FormData(); form.append('file', file); const query = giftId ? `?giftId=${encodeURIComponent(giftId)}` : ''; return request<{ blobName: string; url: string }>(`/lists/${listId}/assets${query}`, { method: 'POST', body: form }); },
 };
 export type User = { id: string; email: string; displayName: string };

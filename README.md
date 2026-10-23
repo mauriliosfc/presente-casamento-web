@@ -26,4 +26,4 @@ Não há integração de pagamento. A mensalidade da plataforma e os pagamentos 
 
 ## GitHub Pages
 
-O frontend é publicado automaticamente em `https://mateusechoesdigital.github.io/presente-casamento-web/` quando há um push para `main`. Para conectar uma API hospedada, cadastre a variável `VITE_API_URL` em **Settings → Secrets and variables → Actions → Variables** do repositório. Sem essa configuração, o frontend usa `http://localhost:3000`, que só funciona para desenvolvimento local.
+O frontend é publicado automaticamente em `https://vmsh.store/` quando há um push para `main`. As variáveis `VITE_API_URL` e `PAGES_CUSTOM_DOMAIN=true` ficam em **Settings → Secrets and variables → Actions → Variables** do repositório. `PAGES_CUSTOM_DOMAIN` faz o build usar a raiz do domínio próprio; sem ele, o workflow usa o caminho `/presente-casamento-web/` do GitHub Pages. Sem `VITE_API_URL`, o frontend usa `http://localhost:3000`, que só funciona para desenvolvimento local.

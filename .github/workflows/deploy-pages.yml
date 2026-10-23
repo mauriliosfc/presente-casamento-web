@@ -31,6 +31,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:3000' }}
+          PAGES_CUSTOM_DOMAIN: ${{ vars.PAGES_CUSTOM_DOMAIN || 'false' }}
       - name: Support direct links on GitHub Pages
         run: cp dist/index.html dist/404.html
       - name: Configure Pages

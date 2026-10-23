@@ -433,7 +433,6 @@ export interface components {
             title: string;
             description?: string;
             weddingDate?: string;
-            slug?: string;
         };
         UpdateListDto: {
             coupleNames?: string;

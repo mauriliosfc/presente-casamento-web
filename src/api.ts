@@ -1,4 +1,5 @@
 import type { components } from './generated/api-schema';
+import type { ImagePresentation } from './image-upload';
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 type ApiError = Error & { status?: number };
 type RegisterInput = components['schemas']['RegisterDto'];
@@ -59,7 +60,7 @@ export const api = {
   confirmRsvp: (slug: string, guestEmail: string, code: string) => request<{ confirmed: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps/confirm`, { method: 'POST', body: JSON.stringify({ guestEmail, code } satisfies ConfirmRsvpInput) }),
   imageUrl: (listId: string, blob: string) => `${API}/lists/${encodeURIComponent(listId)}/assets/public?blob=${encodeURIComponent(blob)}`,
   imagePreviewUrl: async (listId: string, blob: string) => (await request<{ url: string }>(`/lists/${encodeURIComponent(listId)}/assets/preview?blob=${encodeURIComponent(blob)}`)).url,
-  upload: async (listId: string, file: File, giftId?: string) => { const form = new FormData(); form.append('file', file); const query = giftId ? `?giftId=${encodeURIComponent(giftId)}` : ''; return request<{ blobName: string; url: string }>(`/lists/${listId}/assets${query}`, { method: 'POST', body: form }); },
+  upload: async (listId: string, file: File, giftId?: string, presentation: ImagePresentation = { mode: 'CROP', focalX: 0.5, focalY: 0.5 }) => { const form = new FormData(); form.append('file', file); form.append('mode', presentation.mode); form.append('focalX', String(presentation.focalX)); form.append('focalY', String(presentation.focalY)); const query = giftId ? `?giftId=${encodeURIComponent(giftId)}` : ''; return request<{ blobName: string; url: string; width: number; height: number }>(`/lists/${listId}/assets${query}`, { method: 'POST', body: form }); },
 };
 export type User = { id: string; email: string; displayName: string };
 export type WeddingList = { id: string; coupleNames: string; title: string; description: string; weddingDate?: string|null; firstPublishedAt?: string|null; slug: string; coverBlob?: string; status: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; _count?: {gifts:number;intentions:number;rsvps:number} };

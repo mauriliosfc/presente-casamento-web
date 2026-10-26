@@ -6,3 +6,37 @@
 .gift-thumb { width: 64px; height: 64px; border-radius: 3px; object-fit: cover; }
 .file-inline { display: block; margin-top: 8px; font-size: 12px; color: #77786f; }
 .file-inline input { display: block; max-width: 230px; margin-top: 5px; font-size: 11px; }
+.rsvp-manager { display: grid; gap: 18px; }
+.rsvp-event-list, .rsvp-guest-list { display: grid; gap: 10px; }
+.rsvp-event-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 4px; }
+.rsvp-event-card.selected { border-color: var(--olive); background: #f8f6f0; }
+.rsvp-event-select { display: grid; gap: 5px; text-align: left; }
+.rsvp-event-select span, .rsvp-event-select small { color: var(--muted); }
+.rsvp-create-event, .rsvp-extra-field { margin-top: 16px; }
+.rsvp-create-event > summary, .rsvp-extra-field > summary { width: fit-content; cursor: pointer; }
+.rsvp-form { display: grid; gap: 14px; margin-top: 14px; }
+.rsvp-group-config { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.rsvp-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.rsvp-guest-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.rsvp-guest-row p { margin: 5px 0; }
+.rsvp-token-card { max-width: 560px; }
+.public-rsvp-events { display: grid; gap: 14px; }
+.settings-button { display: grid; place-items: center; width: 42px; height: 42px; padding: 9px; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); cursor: pointer; }
+.settings-button:hover { border-color: var(--olive); color: var(--olive); }
+.settings-button:focus-visible, .settings-modal-close:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
+.settings-button svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.settings-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgb(25 26 22 / 58%); }
+.settings-modal { width: min(100%, 960px); max-height: min(92vh, 900px); overflow-y: auto; padding: 26px; background: #fbfaf7; border: 1px solid var(--line); border-radius: 5px; box-shadow: 0 24px 80px rgb(0 0 0 / 24%); }
+.settings-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 10px; }
+.settings-modal-header h2 { margin: 5px 0 0; }
+.settings-modal-close { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--ink); font-size: 28px; line-height: 1; cursor: pointer; }
+.settings-modal-content .editor-grid { align-items: start; gap: 16px; }
+.settings-modal-content .form-panel { margin: 0; }
+@media (max-width: 600px) {
+  .rsvp-event-card, .rsvp-summary, .rsvp-guest-row { align-items: flex-start; flex-direction: column; }
+  .rsvp-group-config { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .settings-modal-backdrop { align-items: flex-end; padding: 0; }
+  .settings-modal { width: 100%; max-height: 94vh; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 12px 12px 0 0; }
+}

@@ -30,7 +30,7 @@ export const api = {
   reset: (token: string, password: string) => request('/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) }),
   lists: () => request<WeddingList[]>('/lists'), createList: (data: CreateListInput) => request<WeddingList>('/lists', { method: 'POST', body: JSON.stringify(data) }),
   getList: (id: string) => request<WeddingList>(`/lists/${id}`), updateList: (id: string, data: UpdateListInput) => request<WeddingList>(`/lists/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  setListStatus: (id: string, status: string) => request<WeddingList>(`/lists/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  setListStatus: (id: string, status: string) => request<WeddingList & { firstPublication: boolean }>(`/lists/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   gifts: (id: string) => request<Gift[]>(`/lists/${id}/gifts`), addGift: (id: string, data: CreateGiftInput) => request<Gift>(`/lists/${id}/gifts`, { method: 'POST', body: JSON.stringify(data) }),
   updateGift: (listId: string, giftId: string, data: UpdateGiftInput) => request<Gift>(`/lists/${listId}/gifts/${giftId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   intentions: (id: string) => request<{items: Intention[]; total: number}>(`/lists/${id}/intentions`), cancelIntention: (listId: string, intentionId: string) => request(`/lists/${listId}/intentions/${intentionId}/cancel`, { method: 'POST' }),
@@ -44,7 +44,7 @@ export const api = {
   previewRsvpImport: (id: string, file: File) => { const form = new FormData(); form.append('file', file); return request<RsvpImportPreview>(`/rsvp-events/${id}/guests/import/preview`, { method: 'POST', body: form }); },
   importRsvpGuests: (id: string, rows: RsvpImportRow[]) => request<{ imported: number }>(`/rsvp-events/${id}/guests/import`, { method: 'POST', body: JSON.stringify({ rows }) }),
   sendRsvpGuest: (eventId: string, guestId: string) => request<{ accepted: boolean; message: string }>(`/rsvp-events/${eventId}/guests/${guestId}/send`, { method: 'POST' }),
-  sendAllRsvpGuests: (eventId: string) => request<{ attempted: number; accepted: number }>(`/rsvp-events/${eventId}/guests/send-all`, { method: 'POST' }),
+  sendAllRsvpGuests: (eventId: string, scope: 'NEW'|'PENDING') => request<{ attempted: number; accepted: number; failed: number; results: Array<{ guestId: string; guestName: string|null; accepted: boolean }> }>(`/rsvp-events/${eventId}/guests/send-all`, { method: 'POST', body: JSON.stringify({ scope }) }),
   rsvpResponses: (id: string) => request<RsvpResponses>(`/rsvp-events/${id}/responses`),
   downloadRsvpExport: async (id: string) => { const response = await fetch(`${API}/rsvp-events/${encodeURIComponent(id)}/responses/export`, { credentials: 'include' }); if (!response.ok) throw new Error('Não foi possível exportar as respostas.'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'confirmacoes-presenca.csv'; link.click(); URL.revokeObjectURL(url); },
   requestRsvpLink: (slug: string, eventId: string, phone: string) => request<{ accepted: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvp-events/${encodeURIComponent(eventId)}/request-link`, { method: 'POST', body: JSON.stringify({ phone }) }),
@@ -62,7 +62,7 @@ export const api = {
   upload: async (listId: string, file: File, giftId?: string) => { const form = new FormData(); form.append('file', file); const query = giftId ? `?giftId=${encodeURIComponent(giftId)}` : ''; return request<{ blobName: string; url: string }>(`/lists/${listId}/assets${query}`, { method: 'POST', body: form }); },
 };
 export type User = { id: string; email: string; displayName: string };
-export type WeddingList = { id: string; coupleNames: string; title: string; description: string; weddingDate?: string|null; slug: string; coverBlob?: string; status: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; _count?: {gifts:number;intentions:number;rsvps:number} };
+export type WeddingList = { id: string; coupleNames: string; title: string; description: string; weddingDate?: string|null; firstPublishedAt?: string|null; slug: string; coverBlob?: string; status: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; _count?: {gifts:number;intentions:number;rsvps:number} };
 export type Gift = { id:string; name:string; description:string; priceCents:number; imageBlob?:string; active:boolean; sortOrder:number };
 export type RsvpMode = 'OPEN' | 'RESERVED';
 export type RsvpGroup = { key: string; label: string; maxCount: number };

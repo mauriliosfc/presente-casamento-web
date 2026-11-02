@@ -42,18 +42,19 @@ export const api = {
   deleteRsvpEvent: (id: string) => request(`/rsvp-events/${id}`, { method: 'DELETE' }),
   rsvpGuests: (id: string) => request<{ items: RsvpGuest[]; total: number }>(`/rsvp-events/${id}/guests`),
   addRsvpGuest: (id: string, data: CreateRsvpGuestInput) => request(`/rsvp-events/${id}/guests`, { method: 'POST', body: JSON.stringify(data) }),
+  downloadRsvpTemplate: async (id: string) => { const response = await fetch(`${API}/rsvp-events/${encodeURIComponent(id)}/guests/import/template`, { credentials: 'include' }); if (!response.ok) throw new Error('Não foi possível baixar o modelo XLSX.'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'modelo-convidados-rsvp.xlsx'; link.click(); URL.revokeObjectURL(url); },
   previewRsvpImport: (id: string, file: File) => { const form = new FormData(); form.append('file', file); return request<RsvpImportPreview>(`/rsvp-events/${id}/guests/import/preview`, { method: 'POST', body: form }); },
   importRsvpGuests: (id: string, rows: RsvpImportRow[]) => request<{ imported: number }>(`/rsvp-events/${id}/guests/import`, { method: 'POST', body: JSON.stringify({ rows }) }),
   sendRsvpGuest: (eventId: string, guestId: string) => request<{ accepted: boolean; message: string }>(`/rsvp-events/${eventId}/guests/${guestId}/send`, { method: 'POST' }),
   sendAllRsvpGuests: (eventId: string, scope: 'NEW'|'PENDING') => request<{ attempted: number; accepted: number; failed: number; results: Array<{ guestId: string; guestName: string|null; accepted: boolean }> }>(`/rsvp-events/${eventId}/guests/send-all`, { method: 'POST', body: JSON.stringify({ scope }) }),
   rsvpResponses: (id: string) => request<RsvpResponses>(`/rsvp-events/${id}/responses`),
-  downloadRsvpExport: async (id: string) => { const response = await fetch(`${API}/rsvp-events/${encodeURIComponent(id)}/responses/export`, { credentials: 'include' }); if (!response.ok) throw new Error('Não foi possível exportar as respostas.'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'confirmacoes-presenca.csv'; link.click(); URL.revokeObjectURL(url); },
+  downloadRsvpExport: async (id: string) => { const response = await fetch(`${API}/rsvp-events/${encodeURIComponent(id)}/responses/export`, { credentials: 'include' }); if (!response.ok) throw new Error('Não foi possível exportar as respostas.'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'confirmacoes-presenca.xlsx'; link.click(); URL.revokeObjectURL(url); },
   requestRsvpLink: (slug: string, eventId: string, phone: string) => request<{ accepted: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvp-events/${encodeURIComponent(eventId)}/request-link`, { method: 'POST', body: JSON.stringify({ phone }) }),
   publicRsvp: (token: string) => request<PublicRsvpForm>(`/public/rsvp/${encodeURIComponent(token)}`),
   markRsvpOpened: (token: string) => request(`/public/rsvp/${encodeURIComponent(token)}/opened`, { method: 'POST' }),
   submitRsvp: (token: string, data: SubmitRsvpInput) => request<{ saved: boolean; message: string }>(`/public/rsvp/${encodeURIComponent(token)}/response`, { method: 'POST', body: JSON.stringify(data) }),
   invite: (id: string, email: string) => request(`/lists/${id}/invitations`, { method: 'POST', body: JSON.stringify({ email }) }),
-  acceptInvite: (token: string) => request(`/lists/invitations/${encodeURIComponent(token)}/accept`, { method: 'POST' }),
+  acceptInvite: (token: string) => request<{ accepted: boolean; listId: string }>(`/lists/invitations/${encodeURIComponent(token)}/accept`, { method: 'POST' }),
   publicList: (slug: string) => request<PublicList>(`/lists/public/${encodeURIComponent(slug)}`),
   paymentOptions: (slug: string) => request<PaymentOptions>(`/public/${encodeURIComponent(slug)}/payments/options`),
   createPayment: (slug: string, data: CreatePaymentInput) => request<PaymentOrder>(`/public/${encodeURIComponent(slug)}/payments`, { method: 'POST', body: JSON.stringify(data) }),
@@ -79,7 +80,7 @@ export type CreateRsvpEventInput = { name: string; eventDate?: string; responseD
 export type CreateRsvpGuestInput = { guestName: string; phone: string; guestEmail?: string; companionAllowance?: Record<string, number> };
 export type RsvpImportRow = CreateRsvpGuestInput;
 export type RsvpImportPreview = { validRows: RsvpImportRow[]; errors: Array<{ row: number; message: string }>; totalRows: number };
-export type PublicRsvpForm = { event: Pick<RsvpEvent, 'id'|'name'|'eventDate'|'responseDeadline'|'companionGroups'|'customFields'>; coupleNames: string; guest: { guestName: string|null; source: 'OPEN'|'RESERVED'|'LEGACY'; attendance: 'YES'|'NO'|null; companionCounts?: Record<string, number>|null; customAnswers?: Record<string, string|boolean>|null; companionAllowance: Record<string, number> } };
+export type PublicRsvpForm = { event: Pick<RsvpEvent, 'id'|'name'|'eventDate'|'responseDeadline'|'companionGroups'|'customFields'>; coupleNames: string; listSlug: string; guest: { guestName: string|null; source: 'OPEN'|'RESERVED'|'LEGACY'; attendance: 'YES'|'NO'|null; companionCounts?: Record<string, number>|null; customAnswers?: Record<string, string|boolean>|null; companionAllowance: Record<string, number> } };
 export type SubmitRsvpInput = { guestName?: string; attendance: 'YES'|'NO'; companionCounts?: Record<string, number>; customAnswers?: Record<string, string|boolean> };
 export type PublicList = Omit<WeddingList,'status'|'_count'> & { gifts: Gift[]; rsvpEvents?: Array<Pick<RsvpEvent, 'id'|'name'|'eventDate'|'responseDeadline'|'mode'>> };
 export type Intention = {id:string;guestName:string;guestEmail?:string;message?:string;status:'REGISTERED'|'CANCELLED';createdAt:string;gift:{name:string;priceCents:number}};

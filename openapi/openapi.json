@@ -950,6 +950,29 @@
         ]
       }
     },
+    "/rsvp-events/{eventId}/guests/import/template": {
+      "get": {
+        "operationId": "RsvpEventsController_importTemplate",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
     "/rsvp-events/{eventId}/guests/{guestId}/send": {
       "post": {
         "operationId": "RsvpEventsController_sendGuest",

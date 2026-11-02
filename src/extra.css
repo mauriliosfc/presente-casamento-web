@@ -21,6 +21,8 @@
 .rsvp-form { display: grid; gap: 14px; margin-top: 14px; }
 .rsvp-group-config { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
 .rsvp-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.rsvp-response-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.rsvp-response-heading h2 { margin: 0; }
 .rsvp-guest-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .rsvp-guest-row p { margin: 5px 0; }
 .rsvp-token-card { max-width: 560px; }
@@ -30,6 +32,11 @@
 .settings-button svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .settings-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgb(25 26 22 / 58%); }
 .settings-modal { width: min(100%, 960px); max-height: min(92vh, 900px); overflow-y: auto; padding: 26px; background: #fbfaf7; border: 1px solid var(--line); border-radius: 5px; box-shadow: 0 24px 80px rgb(0 0 0 / 24%); }
+.success-redirect-backdrop { z-index: 1200; }
+.success-redirect-modal { width: min(100%, 480px); text-align: center; }
+.success-redirect-modal h2 { margin: 8px 0 12px; }
+.success-redirect-modal p { line-height: 1.55; }
+.success-redirect-countdown { margin: 22px 0 0; color: var(--olive-dark); font-weight: 700; }
 .settings-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 10px; }
 .settings-modal-header h2 { margin: 5px 0 0; }
 .settings-modal-close { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--ink); font-size: 28px; line-height: 1; cursor: pointer; }
@@ -62,7 +69,7 @@
 .public-gift-content>strong { margin: 10px 0; }
 .public-gift-content>.button { padding: 10px 12px; font-size: 13px; }
 @media (max-width: 600px) {
-  .rsvp-event-card, .rsvp-summary, .rsvp-guest-row { align-items: flex-start; flex-direction: column; }
+  .rsvp-event-card, .rsvp-summary, .rsvp-guest-row, .rsvp-response-heading { align-items: flex-start; flex-direction: column; }
   .rsvp-group-config { grid-template-columns: 1fr; }
   .image-crop-controls { grid-template-columns: 1fr; }
   .image-editor-actions > * { flex: 1 1 100%; }

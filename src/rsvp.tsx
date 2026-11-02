@@ -2,13 +2,12 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, PublicRsvpForm, RsvpEvent, RsvpField, RsvpGroup, RsvpGuest, RsvpImportPreview, SubmitRsvpInput } from './api';
 import { useToast } from './toast';
+import { SuccessRedirectModal } from './success-redirect-modal';
 
 function toIso(value: string) { return value ? new Date(value).toISOString() : undefined; }
 function dateTime(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—'; }
-export function countConfirmedAttendees(responses: Array<Awaited<ReturnType<typeof api.rsvpResponses>>>) {
-  return responses.reduce((total, response) => total + response.items.reduce((eventTotal, item) => item.attendance === 'YES'
-    ? eventTotal + 1 + Object.values(item.companionCounts ?? {}).reduce((companions, count) => companions + count, 0)
-    : eventTotal, 0), 0);
+export function countConfirmedGuests(responses: Array<Awaited<ReturnType<typeof api.rsvpResponses>>>) {
+  return responses.reduce((total, response) => total + response.items.filter(item => item.respondedAt && item.attendance === 'YES').length, 0);
 }
 function localDateTimeInput(value?: string | null) {
   if (!value) return '';
@@ -28,17 +27,6 @@ function maskBrazilianPhone(value: string) {
   if (number.length <= firstPartLength) return `(${ddd}) ${number}`;
   return `(${ddd}) ${number.slice(0, firstPartLength)}-${number.slice(firstPartLength, firstPartLength + 4)}`;
 }
-function downloadGuestTemplate(event: RsvpEvent) {
-  const headers = ['Nome', 'Telefone', ...event.companionGroups.map(group => group.label)];
-  const csv = `\uFEFF${headers.map(value => `"${value.replaceAll('"', '""')}"`).join(';')}\r\n`;
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = 'modelo-convidados-rsvp.csv';
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
 export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, onResponsesChange }: { listId: string; weddingDate?: string | null; listStatus: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; onEventsChange?: (events: RsvpEvent[]) => void; onResponsesChange?: () => void }) {
   const toast = useToast();
   const [events, setEvents] = useState<RsvpEvent[]>([]);
@@ -152,18 +140,21 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
   }
   async function exportResponses() {
     if (!selected) return;
-    try { await api.downloadRsvpExport(selected); toast.success('Arquivo CSV exportado.'); } catch (err) { toast.error((err as Error).message); }
+    try { await api.downloadRsvpExport(selected); toast.success('Arquivo XLSX exportado.'); } catch (err) { toast.error((err as Error).message); }
+  }
+  async function downloadGuestTemplate(eventId: string) {
+    try { await api.downloadRsvpTemplate(eventId); } catch (err) { toast.error((err as Error).message); }
   }
 
   const event = events.find(item => item.id === selected);
   const eventAcceptingResponses = Boolean(event?.isOpen && event.responseDeadline && new Date(event.responseDeadline) > new Date());
-  const confirmedAttendees = countConfirmedAttendees(responses ? [responses] : []);
+  const confirmedGuests = countConfirmedGuests(responses ? [responses] : []);
   return <div className="rsvp-manager" id="rsvp-manager">
     {error && <div className="notice error" role="alert">{error}</div>}
     <section className="form-panel">
       <h2>Confirmação de presença</h2>
       {event && <article className="rsvp-event-card selected">
-        <div className="rsvp-event-select"><strong>{event.name}</strong><span>{event.mode === 'OPEN' ? 'Link solicitado na página pública' : 'Links individuais por WhatsApp'} · {event.isOpen && event.responseDeadline && new Date(event.responseDeadline) > new Date() ? 'Aberta' : event.responseDeadline ? 'Fechada' : 'Não configurada'} · prazo {dateTime(event.responseDeadline)}</span><small>{event._count?.guests ?? 0} convidados cadastrados</small></div>
+        <div className="rsvp-event-select"><strong>{event.name}</strong><span>{event.mode === 'OPEN' ? 'Link solicitado na página pública' : 'Links individuais por WhatsApp'} · {event.isOpen && event.responseDeadline && new Date(event.responseDeadline) > new Date() ? 'Aberta' : event.responseDeadline ? 'Fechada' : 'Não configurada'} · prazo {dateTime(event.responseDeadline)}</span><small>{event._count?.guests ?? 0} convidados cadastrados</small><small>{confirmedGuests} {confirmedGuests === 1 ? 'convidado confirmou presença' : 'convidados confirmaram presença'} · {responses?.no ?? 0} não poderão ir</small></div>
         <div className="inline-actions">{event.responseDeadline && <button type="button" className="button secondary small" onClick={() => void toggleEvent(event)}>{event.isOpen ? 'Fechar confirmação' : 'Abrir confirmação'}</button>}<button type="button" className="text-button" onClick={() => setEditingDeadline(value => !value)}>{event.responseDeadline ? 'Editar prazo' : 'Configurar prazo'}</button><button type="button" className="text-button" onClick={() => void removeEvent(event)}>Remover</button></div>
       </article>}
       {event && (!event.responseDeadline || editingDeadline) && <form className="form-panel compact" onSubmit={saveDeadline}><h3>{event.responseDeadline ? 'Editar prazo de resposta' : 'Configurar confirmação'}</h3><p>A página da lista e a confirmação têm estados independentes. Para receber respostas, informe um prazo futuro e abra a confirmação.</p><label>Prazo final de resposta<input name="deadline" type="datetime-local" defaultValue={localDateTimeInput(event.responseDeadline)} required min={localDateTimeInput(new Date(Date.now() + 60_000).toISOString())} /></label><div className="inline-actions"><button className="button">Salvar prazo</button><button type="button" className="button ghost" onClick={() => setEditingDeadline(false)}>Cancelar</button></div></form>}
@@ -188,15 +179,11 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
     </section>
 
     {event && <>
-      <section className="form-panel rsvp-summary">
-        <div><h2>{event.name}</h2><p>{confirmedAttendees} pessoas confirmadas (incluindo acompanhantes) · {responses?.no ?? 0} convidados não poderão ir · prazo {dateTime(event.responseDeadline)}</p></div>
-        <button type="button" className="button secondary" onClick={() => void exportResponses()}>Exportar CSV</button>
-      </section>
       {event.mode === 'OPEN' && <section className="form-panel"><h2>Links da confirmação aberta</h2><p>Convidados informam o telefone na página pública para receber o link pelo WhatsApp.</p></section>}
       {event.mode === 'RESERVED' && <>
         <div className="editor-grid">
           <form className="form-panel" onSubmit={addGuest}><h2>Adicionar convidado</h2><label>Nome<input name="guestName" required minLength={2} /></label><label>Telefone com DDD<input name="phone" type="tel" inputMode="numeric" autoComplete="tel" value={guestPhone} onChange={e => setGuestPhone(maskBrazilianPhone(e.target.value))} required pattern={'\\([0-9]{2}\\) [0-9]{4,5}-[0-9]{4}'} title="Digite um telefone com DDD, por exemplo (11) 99999-9999." placeholder="(11) 99999-9999" maxLength={15} /></label><h3>Limites de acompanhantes</h3>{event.companionGroups.map(group => <label key={group.key}>{group.label}<input name={`allowance_${group.key}`} type="number" min="0" max={group.maxCount} defaultValue={group.maxCount} required /></label>)}<button className="button secondary">Cadastrar convidado</button></form>
-          <section className="form-panel"><h2>Importar convidados</h2><p>Use o modelo CSV do evento ou uma planilha com nome, telefone e limites dos acompanhantes.</p><p className="fine-print">Telefone com DDD; sem código do país, o sistema assume +55. Os números nas colunas de acompanhantes definem o limite permitido para cada convidado.</p><button type="button" className="button secondary" onClick={() => downloadGuestTemplate(event)}>Baixar modelo CSV</button><p>Também aceita arquivos XLS e XLSX. Revise a prévia; os links serão enviados quando a lista for publicada.</p><input type="file" accept=".csv,.xls,.xlsx" onChange={e => void previewFile(e.currentTarget.files?.[0])} />
+          <section className="form-panel"><h2>Importar convidados</h2><p>Use o modelo XLSX do evento ou uma planilha XLSX com nome, telefone, e-mail opcional e limites dos acompanhantes.</p><p className="fine-print">Telefone com DDD; sem código do país, o sistema assume +55. Os números nas colunas de acompanhantes definem o limite permitido para cada convidado.</p><button type="button" className="button secondary" onClick={() => void downloadGuestTemplate(event.id)}>Baixar modelo XLSX</button><p>Importe um arquivo XLSX. Revise a prévia; os links serão enviados quando a lista for publicada.</p><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={e => void previewFile(e.currentTarget.files?.[0])} />
             {preview && <><p>{preview.validRows.length} válidos de {preview.totalRows} linhas.</p>{preview.errors.length > 0 && <ul>{preview.errors.slice(0, 20).map((item, index) => <li key={`${item.row}-${index}`}>Linha {item.row}: {item.message}</li>)}</ul>}<button type="button" className="button secondary" disabled={!preview.validRows.length} onClick={() => void importPreview()}>Importar válidos</button></>}
           </section>
         </div>
@@ -207,7 +194,7 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
         <div><strong>{guest.guestName || 'Aguardando nome do convidado'}</strong><p>{guest.phoneE164 || 'RSVP legado sem telefone'} · {guest.attendance === 'YES' ? 'Vai comparecer' : guest.attendance === 'NO' ? 'Não poderá ir' : 'Sem resposta'}</p><p>{guest.respondedAt ? `Resposta: ${dateTime(guest.respondedAt)}` : guest.firstOpenedAt ? `Link aberto: ${dateTime(guest.firstOpenedAt)}` : guest.whatsappStatus === 'FAILED' ? 'Falha no envio; link pode ser reenviado' : guest.whatsappStatus === 'DELIVERED' ? 'Link entregue pelo WhatsApp' : guest.whatsappStatus === 'SENT' ? 'WhatsApp aceitou o link; aguardando entrega' : guest.whatsappStatus === 'PENDING' ? 'Envio pelo WhatsApp pendente' : 'Link ainda não enviado'}</p>{guest.whatsappStatus && <small>WhatsApp: {guest.whatsappStatus}</small>}</div>
         {event.mode === 'RESERVED' && guest.source === 'RESERVED' && !guest.respondedAt && listStatus === 'PUBLISHED' && eventAcceptingResponses && <button type="button" className="button secondary small" onClick={() => void sendOne(guest)}>{guest.whatsappStatus ? 'Reenviar link' : 'Enviar link'}</button>}
       </article>)}</div>}</section>
-      {responses && responses.items.length > 0 && <section className="form-panel"><h2>Respostas registradas</h2>{responses.items.map(response => <article className="guest-row" key={response.id}><div><strong>{response.guestName}</strong><p>{response.phoneE164} · {response.attendance === 'YES' ? 'Vai comparecer' : 'Não poderá ir'}</p><small>{Object.entries(response.companionCounts ?? {}).map(([key, value]) => `${key}: ${value}`).join(' · ')}</small></div><span>{dateTime(response.respondedAt)}</span></article>)}</section>}
+      {responses && responses.items.length > 0 && <section className="form-panel"><div className="rsvp-response-heading"><h2>Respostas registradas</h2><button type="button" className="button secondary" onClick={() => void exportResponses()}>Exportar XLSX</button></div>{responses.items.map(response => <article className="guest-row" key={response.id}><div><strong>{response.guestName}</strong><p>{response.phoneE164} · {response.attendance === 'YES' ? 'Vai comparecer' : 'Não poderá ir'}</p><small>{Object.entries(response.companionCounts ?? {}).map(([key, value]) => `${key}: ${value}`).join(' · ')}</small></div><span>{dateTime(response.respondedAt)}</span></article>)}</section>}
     </>}
   </div>;
 }
@@ -232,7 +219,7 @@ function OpenLinkRequest({ slug, event }: { slug: string; event: NonNullable<imp
 export function RsvpTokenPage() {
   const { token = '' } = useParams();
   const [data, setData] = useState<PublicRsvpForm | null>(null);
-  const toast = useToast(); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  const toast = useToast(); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const [successMessage, setSuccessMessage] = useState('');
   const opened = useRef(false);
   useEffect(() => { api.publicRsvp(token).then(setData).catch(err => setError((err as Error).message)); }, [token]);
   useEffect(() => {
@@ -250,13 +237,20 @@ export function RsvpTokenPage() {
       if (value !== null && value !== '') customAnswers[field.key] = field.type === 'YES_NO' ? value === 'true' : String(value);
     }
     const payload: SubmitRsvpInput = { attendance: String(form.get('attendance')) as 'YES'|'NO', companionCounts, customAnswers, ...(data.guest.source === 'OPEN' ? { guestName: String(form.get('guestName')) } : {}) };
-    try { const result = await api.submitRsvp(token, payload); toast.success(result.message); setData(current => current ? { ...current, guest: { ...current.guest, guestName: payload.guestName ?? current.guest.guestName, attendance: payload.attendance, companionCounts, customAnswers } } : current); }
+    try {
+      await api.submitRsvp(token, payload);
+      const message = data.guest.attendance
+        ? 'Sua resposta foi atualizada com sucesso.'
+        : payload.attendance === 'YES' ? 'Presença confirmada com sucesso!' : 'Sua resposta foi registrada com sucesso.';
+      setSuccessMessage(message);
+      setData(current => current ? { ...current, guest: { ...current.guest, guestName: payload.guestName ?? current.guest.guestName, attendance: payload.attendance, companionCounts, customAnswers } } : current);
+    }
     catch (err) { toast.error((err as Error).message); }
     finally { setBusy(false); }
   }
   if (error && !data) return <main className="auth-shell"><section className="auth-card"><h1>Link indisponível</h1><p>{error}</p><Link to="/">Voltar ao início</Link></section></main>;
   if (!data) return <main className="center">Carregando confirmação…</main>;
-  return <main className="auth-shell"><Link className="brand" to="/">nosso <i>sim</i></Link><section className="auth-card rsvp-token-card"><span className="eyebrow">CONFIRMAÇÃO DE PRESENÇA</span><h1>{data.event.name}</h1><p>{data.coupleNames}{data.event.eventDate ? ` · ${dateTime(data.event.eventDate)}` : ''}</p>
+  return <main className="auth-shell">{successMessage && <SuccessRedirectModal title="Resposta registrada!" message={successMessage} to={`/lista/${encodeURIComponent(data.listSlug)}`} />}<Link className="brand" to="/">nosso <i>sim</i></Link><section className="auth-card rsvp-token-card"><span className="eyebrow">CONFIRMAÇÃO DE PRESENÇA</span><h1>{data.event.name}</h1><p>{data.coupleNames}{data.event.eventDate ? ` · ${dateTime(data.event.eventDate)}` : ''}</p>
     <form className="rsvp-form" onSubmit={submit}>
       {data.guest.source === 'OPEN' && <label>Seu nome<input name="guestName" defaultValue={data.guest.guestName ?? ''} required minLength={2} maxLength={100} /></label>}
       <label>Confirmação<select name="attendance" defaultValue={data.guest.attendance ?? 'YES'}><option value="YES">Sim, estarei lá</option><option value="NO">Não poderei comparecer</option></select></label>

@@ -33,6 +33,8 @@
 .settings-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 10px; }
 .settings-modal-header h2 { margin: 5px 0 0; }
 .settings-modal-close { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--ink); font-size: 28px; line-height: 1; cursor: pointer; }
+.archive-confirm-button { background: #914e46; border-color: #914e46; color: #fff; }
+.archive-confirm-button:hover { background: #7e4039; border-color: #7e4039; }
 .settings-modal-content .editor-grid { align-items: start; gap: 16px; }
 .settings-modal-content .form-panel { margin: 0; }
 .image-editor-backdrop { z-index: 1100; }

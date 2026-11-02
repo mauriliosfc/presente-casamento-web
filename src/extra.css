@@ -98,7 +98,14 @@
 .payment-admin-row { align-items: center; }
 .payment-admin-row > div:last-child { display: grid; gap: 8px; justify-items: end; }
 .payment-admin-row p { margin: 6px 0; }
+.status.payment-approved { background: #e9f0e4; color: #526b47; }
+.status.payment-refunded { background: #fbefed; color: #914e46; }
+.received-heading, .received-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.received-heading h2 { margin-bottom: 8px; }
+.received-heading p { margin-bottom: 0; color: var(--muted); font-size: 13px; }
+.received-pagination { justify-content: center; margin-top: 22px; color: var(--muted); font-size: 13px; }
 @media(max-width:600px) { .payment-admin-row { align-items: flex-start; flex-direction: column; } .payment-admin-row > div:last-child { width: 100%; display: flex; align-items: center; justify-content: space-between; } }
+@media(max-width:600px) { .received-heading { align-items: flex-start; flex-direction: column; } .received-pagination { flex-wrap: wrap; } }
 @media(max-width:760px) {
   .hero { display: block; width: 100%; }
   .hero-art { margin-top: 40px; }

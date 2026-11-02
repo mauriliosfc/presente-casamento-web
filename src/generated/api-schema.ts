@@ -693,6 +693,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/payments/return/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PaymentsController_checkoutReturn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lists/{listId}/payments": {
         parameters: {
             query?: never;
@@ -880,6 +896,32 @@ export interface components {
             method: "PIX" | "CREDIT_CARD";
             amountCents: number;
             idempotencyKey: string;
+        };
+        ReceivedPaymentDto: {
+            id: string;
+            giftName: string;
+            payerName: string;
+            payerEmail: string | null;
+            amountCents: number;
+            currency: string;
+            /** @enum {string} */
+            method: "PIX" | "CREDIT_CARD";
+            providerPaymentMethodId: string | null;
+            /** @enum {string} */
+            status: "APPROVED" | "REFUNDED";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            confirmedAt: string | null;
+            providerTransactionId: string | null;
+        };
+        ReceivedPaymentsPageDto: {
+            items: components["schemas"]["ReceivedPaymentDto"][];
+            total: number;
+            approvedTotal: number;
+            refundedTotal: number;
+            page: number;
+            limit: number;
         };
     };
     responses: never;
@@ -1950,9 +1992,33 @@ export interface operations {
             };
         };
     };
-    PaymentsController_list: {
+    PaymentsController_checkoutReturn: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PaymentsController_list: {
+        parameters: {
+            query?: {
+                /** @description Página de pagamentos recebidos. */
+                page?: number;
+                /** @description Registros por página; máximo de 100. */
+                limit?: number;
+            };
             header?: never;
             path: {
                 listId: string;
@@ -1965,7 +2031,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReceivedPaymentsPageDto"];
+                };
             };
         };
     };

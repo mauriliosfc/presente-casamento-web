@@ -58,7 +58,7 @@ export const api = {
   paymentOptions: (slug: string) => request<PaymentOptions>(`/public/${encodeURIComponent(slug)}/payments/options`),
   createPayment: (slug: string, data: CreatePaymentInput) => request<PaymentOrder>(`/public/${encodeURIComponent(slug)}/payments`, { method: 'POST', body: JSON.stringify(data) }),
   paymentStatus: (token: string) => request<PaymentOrder>(`/public/payments/${encodeURIComponent(token)}`),
-  payments: (listId: string) => request<{ items: AdminPayment[] }>(`/lists/${encodeURIComponent(listId)}/payments`),
+  payments: (listId: string, page = 1, limit = 50) => request<ReceivedPayments>(`/lists/${encodeURIComponent(listId)}/payments?page=${page}&limit=${limit}`),
   rsvp: (slug: string, data: CreateRsvpInput) => request<{ pending: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps`, { method: 'POST', body: JSON.stringify(data) }),
   resendRsvpConfirmation: (slug: string, guestEmail: string) => request<{ accepted: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps/resend-confirmation`, { method: 'POST', body: JSON.stringify({ guestEmail } satisfies ResendRsvpConfirmationInput) }),
   confirmRsvp: (slug: string, guestEmail: string, code: string) => request<{ confirmed: boolean; message: string }>(`/public/${encodeURIComponent(slug)}/rsvps/confirm`, { method: 'POST', body: JSON.stringify({ guestEmail, code } satisfies ConfirmRsvpInput) }),
@@ -86,5 +86,6 @@ export type Intention = {id:string;guestName:string;guestEmail?:string;message?:
 export type PaymentOptions = { methods: Array<'PIX'|'CREDIT_CARD'>; card: { provider: string; checkout: string; maxInstallments: number; installmentTermsDisplayedByProvider: boolean }; pix: { provider: string; automaticConfirmation: boolean } };
 export type CreatePaymentInput = { giftId: string; payerName: string; payerEmail: string; method: 'PIX'|'CREDIT_CARD'; amountCents: number; idempotencyKey: string };
 export type PaymentOrder = { id: string; publicToken: string; listSlug?: string; method: 'PIX'|'CREDIT_CARD'; amountCents: number; currency: string; status: 'PENDING'|'APPROVED'|'REJECTED'|'CANCELLED'|'EXPIRED'|'REFUNDED'; checkoutUrl?: string|null; pixPayload?: string|null; pixQrBase64?: string|null; createdAt: string; confirmedAt?: string|null };
-export type AdminPayment = Omit<PaymentOrder, 'publicToken'|'checkoutUrl'|'pixPayload'|'pixQrBase64'> & { giftName: string; payerName: string; payerEmail?: string|null; provider: string; providerTransactionId?: string|null };
+export type ReceivedPayment = { id: string; giftName: string; payerName: string; payerEmail?: string|null; amountCents: number; currency: string; method: 'PIX'|'CREDIT_CARD'; providerPaymentMethodId?: string|null; status: 'APPROVED'|'REFUNDED'; createdAt: string; confirmedAt?: string|null; providerTransactionId?: string|null };
+export type ReceivedPayments = { items: ReceivedPayment[]; total: number; approvedTotal: number; refundedTotal: number; page: number; limit: number };
 export type Rsvp = {id:string;guestName:string;attendance:'YES'|'NO';createdAt:string};

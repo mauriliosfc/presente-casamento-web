@@ -1399,6 +1399,29 @@
         ]
       }
     },
+    "/payments/return/{token}": {
+      "get": {
+        "operationId": "PaymentsController_checkoutReturn",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
     "/lists/{listId}/payments": {
       "get": {
         "operationId": "PaymentsController_list",
@@ -1410,11 +1433,36 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Página de pagamentos recebidos.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Registros por página; máximo de 100.",
+            "schema": {
+              "type": "number"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedPaymentsPageDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -2016,6 +2064,109 @@
           "method",
           "amountCents",
           "idempotencyKey"
+        ]
+      },
+      "ReceivedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "giftName": {
+            "type": "string"
+          },
+          "payerName": {
+            "type": "string"
+          },
+          "payerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "amountCents": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "PIX",
+              "CREDIT_CARD"
+            ],
+            "type": "string"
+          },
+          "providerPaymentMethodId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "APPROVED",
+              "REFUNDED"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "confirmedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "providerTransactionId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "giftName",
+          "payerName",
+          "payerEmail",
+          "amountCents",
+          "currency",
+          "method",
+          "providerPaymentMethodId",
+          "status",
+          "createdAt",
+          "confirmedAt",
+          "providerTransactionId"
+        ]
+      },
+      "ReceivedPaymentsPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivedPaymentDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "approvedTotal": {
+            "type": "number"
+          },
+          "refundedTotal": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "approvedTotal",
+          "refundedTotal",
+          "page",
+          "limit"
         ]
       }
     }

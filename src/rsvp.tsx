@@ -5,6 +5,11 @@ import { useToast } from './toast';
 
 function toIso(value: string) { return value ? new Date(value).toISOString() : undefined; }
 function dateTime(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—'; }
+export function countConfirmedAttendees(responses: Array<Awaited<ReturnType<typeof api.rsvpResponses>>>) {
+  return responses.reduce((total, response) => total + response.items.reduce((eventTotal, item) => item.attendance === 'YES'
+    ? eventTotal + 1 + Object.values(item.companionCounts ?? {}).reduce((companions, count) => companions + count, 0)
+    : eventTotal, 0), 0);
+}
 function localDateTimeInput(value?: string | null) {
   if (!value) return '';
   const date = new Date(value);
@@ -34,7 +39,7 @@ function downloadGuestTemplate(event: RsvpEvent) {
   URL.revokeObjectURL(url);
 }
 
-export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange }: { listId: string; weddingDate?: string | null; listStatus: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; onEventsChange?: (events: RsvpEvent[]) => void }) {
+export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, onResponsesChange }: { listId: string; weddingDate?: string | null; listStatus: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; onEventsChange?: (events: RsvpEvent[]) => void; onResponsesChange?: () => void }) {
   const toast = useToast();
   const [events, setEvents] = useState<RsvpEvent[]>([]);
   const [selected, setSelected] = useState('');
@@ -58,7 +63,7 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange }:
   }
   async function loadGuests(eventId: string) {
     if (!eventId) return;
-    try { const result = await api.rsvpGuests(eventId); setGuests(result.items); setResponses(await api.rsvpResponses(eventId)); }
+    try { const result = await api.rsvpGuests(eventId); setGuests(result.items); const responseList = await api.rsvpResponses(eventId); setResponses(responseList); onResponsesChange?.(); }
     catch (err) { setError((err as Error).message); }
   }
   useEffect(() => { void loadEvents(); }, [listId]);
@@ -152,6 +157,7 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange }:
 
   const event = events.find(item => item.id === selected);
   const eventAcceptingResponses = Boolean(event?.isOpen && event.responseDeadline && new Date(event.responseDeadline) > new Date());
+  const confirmedAttendees = countConfirmedAttendees(responses ? [responses] : []);
   return <div className="rsvp-manager" id="rsvp-manager">
     {error && <div className="notice error" role="alert">{error}</div>}
     <section className="form-panel">
@@ -183,7 +189,7 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange }:
 
     {event && <>
       <section className="form-panel rsvp-summary">
-        <div><h2>{event.name}</h2><p>{responses?.yes ?? 0} confirmados · {responses?.no ?? 0} não poderão ir · prazo {dateTime(event.responseDeadline)}</p></div>
+        <div><h2>{event.name}</h2><p>{confirmedAttendees} pessoas confirmadas (incluindo acompanhantes) · {responses?.no ?? 0} convidados não poderão ir · prazo {dateTime(event.responseDeadline)}</p></div>
         <button type="button" className="button secondary" onClick={() => void exportResponses()}>Exportar CSV</button>
       </section>
       {event.mode === 'OPEN' && <section className="form-panel"><h2>Links da confirmação aberta</h2><p>Convidados informam o telefone na página pública para receber o link pelo WhatsApp.</p></section>}

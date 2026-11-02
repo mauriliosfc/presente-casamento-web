@@ -1,6 +1,12 @@
 
 .cover-preview { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 3px; margin: 4px 0 12px; }
 .public-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; margin-top: 20px; }
+.public-gift-tools { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px); gap: 16px; margin: 0 0 22px; }
+.public-gift-tools label { display: flex; flex-direction: column; gap: 7px; color: #55574f; font-size: 13px; font-weight: 600; }
+.public-gift-tools input, .public-gift-tools select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #dedbd3; border-radius: 3px; background: #fff; color: #383a34; }
+.public-gift-tools input:focus, .public-gift-tools select:focus { outline: 0; border-color: #8c987d; box-shadow: 0 0 0 3px #7e8d6518; }
+.public-gift-empty { padding: 24px; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
+@media(max-width:600px) { .public-gift-tools { grid-template-columns: 1fr; } }
 .gift-thumb { width: 64px; aspect-ratio: 1; border-radius: 3px; object-fit: cover; }
 .file-inline { display: block; margin-top: 8px; font-size: 12px; color: #77786f; }
 .file-inline input { display: block; max-width: 230px; margin-top: 5px; font-size: 11px; }

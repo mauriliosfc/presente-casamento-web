@@ -18,11 +18,11 @@ Configure `VITE_API_URL` para a origem da API (padrão local `http://localhost:3
 - Dashboard, convite de segundo integrante e administração de listas.
 - Presentes simbólicos, publicação, página pública e respostas de RSVP.
 - RSVP com e-mail verificado, bloqueio de resposta duplicada e reenvio limitado do link.
-- Registro de intenção sem processamento financeiro.
+- Registro opcional de intenção sem pagamento, contribuições por Pix e cartão via Mercado Pago, página de status do pedido e painel de pagamentos.
 
-## Limite explícito
+## Pagamentos
 
-Não há integração de pagamento. A mensalidade da plataforma e os pagamentos dos presentes serão avaliados em fase futura. A tela pública informa que intenção não é pagamento e não há compra/entrega de item físico.
+O frontend não recebe nem armazena dados do cartão. O cartão é concluído no Checkout Pro do Mercado Pago e o Pix mostra o QR/copia e cola criado pela API. O retorno ao site consulta o status no backend; somente a notificação autenticada do Mercado Pago confirma o pagamento. Configure `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_WEBHOOK_URL` e `PAYMENT_TOKEN_SECRET` no backend. Para development, use credenciais de teste e um túnel HTTPS para receber webhooks. A mensalidade da plataforma e o split seguem fora do escopo.
 
 ## GitHub Pages
 

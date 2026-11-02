@@ -722,6 +722,520 @@
         ]
       }
     },
+    "/lists/{listId}/rsvp-events": {
+      "get": {
+        "operationId": "RsvpEventsController_events",
+        "parameters": [
+          {
+            "name": "listId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      },
+      "post": {
+        "operationId": "RsvpEventsController_createEvent",
+        "parameters": [
+          {
+            "name": "listId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRsvpEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}": {
+      "patch": {
+        "operationId": "RsvpEventsController_updateEvent",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRsvpEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      },
+      "delete": {
+        "operationId": "RsvpEventsController_deleteEvent",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/guests": {
+      "get": {
+        "operationId": "RsvpEventsController_guests",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      },
+      "post": {
+        "operationId": "RsvpEventsController_addGuest",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRsvpGuestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/guests/import/preview": {
+      "post": {
+        "operationId": "RsvpEventsController_previewImport",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/guests/import": {
+      "post": {
+        "operationId": "RsvpEventsController_importGuests",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRsvpGuestsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/guests/{guestId}/send": {
+      "post": {
+        "operationId": "RsvpEventsController_sendGuest",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/guests/send-all": {
+      "post": {
+        "operationId": "RsvpEventsController_sendAll",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendRsvpLinksDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/responses": {
+      "get": {
+        "operationId": "RsvpEventsController_responses",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/rsvp-events/{eventId}/responses/export": {
+      "get": {
+        "operationId": "RsvpEventsController_export",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/public/{slug}/rsvp-events/{eventId}/request-link": {
+      "post": {
+        "operationId": "RsvpEventsController_requestLink",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenRsvpLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/public/rsvp/{token}": {
+      "get": {
+        "operationId": "RsvpEventsController_publicForm",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/public/rsvp/{token}/opened": {
+      "post": {
+        "operationId": "RsvpEventsController_markOpened",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/public/rsvp/{token}/response": {
+      "post": {
+        "operationId": "RsvpEventsController_respond",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRsvpResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/integrations/openwa/webhook": {
+      "post": {
+        "operationId": "RsvpEventsController_openWaWebhook",
+        "parameters": [
+          {
+            "name": "x-openwa-signature",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
+    "/integrations/rsvp-messaging/status": {
+      "post": {
+        "operationId": "RsvpEventsController_messageStatus",
+        "parameters": [
+          {
+            "name": "x-rsvp-signature",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpMessageStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
     "/lists/{listId}/assets": {
       "post": {
         "operationId": "UploadsController_upload",
@@ -814,11 +1328,118 @@
           "uploads"
         ]
       }
+    },
+    "/public/{slug}/payments/options": {
+      "get": {
+        "operationId": "PaymentsController_options",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/public/{slug}/payments": {
+      "post": {
+        "operationId": "PaymentsController_create",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/public/payments/{token}": {
+      "get": {
+        "operationId": "PaymentsController_status",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/lists/{listId}/payments": {
+      "get": {
+        "operationId": "PaymentsController_list",
+        "parameters": [
+          {
+            "name": "listId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/payments/webhook": {
+      "post": {
+        "operationId": "PaymentsController_webhook",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
     }
   },
   "info": {
     "title": "Presente de Casamento API",
-    "description": "API de listas e intenções de presentear. Não processa pagamentos.",
+    "description": "API de listas, RSVP e pagamentos via Mercado Pago.",
     "version": "1.0.0",
     "contact": {}
   },
@@ -1118,6 +1739,283 @@
         },
         "required": [
           "guestEmail"
+        ]
+      },
+      "CreateRsvpEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "eventDate": {
+            "type": "string"
+          },
+          "responseDeadline": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "RESERVED"
+            ]
+          },
+          "companionGroups": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "customFields": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "responseDeadline",
+          "mode",
+          "companionGroups",
+          "customFields"
+        ]
+      },
+      "UpdateRsvpEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "eventDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseDeadline": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "RESERVED"
+            ]
+          },
+          "companionGroups": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "customFields": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateRsvpGuestDto": {
+        "type": "object",
+        "properties": {
+          "guestName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "guestEmail": {
+            "type": "string",
+            "maxLength": 320,
+            "format": "email"
+          },
+          "companionAllowance": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "guestName",
+          "phone"
+        ]
+      },
+      "ImportRsvpGuestRowDto": {
+        "type": "object",
+        "properties": {
+          "guestName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "guestEmail": {
+            "type": "string",
+            "maxLength": 320,
+            "format": "email"
+          },
+          "companionAllowance": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "guestName",
+          "phone"
+        ]
+      },
+      "ImportRsvpGuestsDto": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRsvpGuestRowDto"
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ]
+      },
+      "SendRsvpLinksDto": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "PENDING"
+            ]
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "OpenRsvpLinkDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "SubmitRsvpResponseDto": {
+        "type": "object",
+        "properties": {
+          "guestName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "attendance": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "companionCounts": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "customAnswers": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "attendance"
+        ]
+      },
+      "RsvpMessageStatusDto": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "WHATSAPP",
+              "SMS"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SENT",
+              "DELIVERED",
+              "FAILED"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "channel",
+          "status"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "giftId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payerName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "payerEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PIX",
+              "CREDIT_CARD"
+            ]
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 100,
+            "maximum": 10000000
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 16
+          }
+        },
+        "required": [
+          "giftId",
+          "payerName",
+          "payerEmail",
+          "method",
+          "amountCents",
+          "idempotencyKey"
         ]
       }
     }

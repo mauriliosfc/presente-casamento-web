@@ -13,3 +13,4 @@
 @keyframes toast-enter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.toast-viewport{right:12px;left:12px;top:max(12px,env(safe-area-inset-top));width:auto}}
 @media(prefers-reduced-motion:reduce){.toast{animation:none}}
+.button-spinner{width:14px;height:14px;flex:0 0 14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:button-spin .7s linear infinite}@keyframes button-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.button-spinner{animation-duration:1.4s}}

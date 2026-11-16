@@ -22,6 +22,7 @@ async function flushPromises() {
 }
 
 beforeEach(() => {
+  localStorage.clear();
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div');
   document.body.append(container);
@@ -83,7 +84,6 @@ describe('RSVP success redirect', () => {
   it.each([
     { attendance: 'YES', existingAttendance: null, message: 'Presença confirmada com sucesso!' },
     { attendance: 'NO', existingAttendance: null, message: 'Sua resposta foi registrada com sucesso.' },
-    { attendance: 'NO', existingAttendance: 'YES', message: 'Sua resposta foi atualizada com sucesso.' },
   ] as const)('saves $attendance response and redirects to the public gift list after three seconds', async ({ attendance, existingAttendance, message }) => {
     vi.useFakeTimers();
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
@@ -127,6 +127,34 @@ describe('RSVP success redirect', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(2999); });
     expect(window.location.pathname).toBe('/confirmar-presenca/rsvp-token');
     await act(async () => { await vi.advanceTimersByTimeAsync(1); await flushPromises(); });
+    expect(window.location.pathname).toBe('/lista/ana-e-pedro');
+    expect(container.textContent).toContain('Lista pública: ana-e-pedro');
+  });
+
+  it('redirects an already answered individual RSVP link to the gift list', async () => {
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/auth/csrf')) return Promise.resolve(jsonResponse({ csrfToken: 'csrf-test' }));
+      if (url.endsWith('/auth/me')) return Promise.resolve(jsonResponse({ user: null }, 401));
+      if (url.endsWith('/public/rsvp/rsvp-token')) return Promise.resolve(jsonResponse({
+        event: { id: 'event-1', name: 'Casamento', eventDate: null, responseDeadline: '2027-01-01T00:00:00.000Z', companionGroups: [], customFields: [] },
+        coupleNames: 'Ana e Pedro', listSlug: 'ana-e-pedro',
+        guest: { guestName: 'Marina', source: 'RESERVED', attendance: 'YES', companionCounts: {}, customAnswers: {}, companionAllowance: {} },
+      }));
+      throw new Error(`Requisição inesperada: ${url}`);
+    }));
+    window.history.pushState({}, '', '/confirmar-presenca/rsvp-token?eventId=event-1');
+
+    await act(async () => {
+      root.render(createElement(BrowserRouter, null, createElement(ToastProvider, null,
+        createElement(Routes, null,
+          createElement(Route, { path: '/confirmar-presenca/:token', element: createElement(RsvpTokenPage) }),
+          createElement(Route, { path: '/lista/:slug', element: createElement(RsvpDestination) }),
+        ),
+      )));
+      await flushPromises();
+    });
+
     expect(window.location.pathname).toBe('/lista/ana-e-pedro');
     expect(container.textContent).toContain('Lista pública: ana-e-pedro');
   });

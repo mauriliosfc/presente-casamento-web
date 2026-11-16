@@ -1,11 +1,23 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, PublicRsvpForm, RsvpEvent, RsvpField, RsvpGroup, RsvpGuest, RsvpImportPreview, SubmitRsvpInput } from './api';
 import { useToast } from './toast';
 import { SuccessRedirectModal } from './success-redirect-modal';
 
 function toIso(value: string) { return value ? new Date(value).toISOString() : undefined; }
 function dateTime(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—'; }
+const RSVP_ANSWERED_CACHE_PREFIX = 'rsvp-answered:';
+function cachedAnsweredSlug(eventId: string) {
+  try {
+    const value = localStorage.getItem(`${RSVP_ANSWERED_CACHE_PREFIX}${eventId}`);
+    if (!value) return null;
+    const parsed = JSON.parse(value) as { slug?: unknown };
+    return typeof parsed.slug === 'string' ? parsed.slug : null;
+  } catch { return null; }
+}
+function cacheAnsweredEvent(eventId: string, slug: string) {
+  try { localStorage.setItem(`${RSVP_ANSWERED_CACHE_PREFIX}${eventId}`, JSON.stringify({ slug })); } catch { /* Browser storage can be disabled. */ }
+}
 export function countConfirmedGuests(responses: Array<Awaited<ReturnType<typeof api.rsvpResponses>>>) {
   return responses.reduce((total, response) => total + response.items.filter(item => item.respondedAt && item.attendance === 'YES').length, 0);
 }
@@ -27,7 +39,7 @@ function maskBrazilianPhone(value: string) {
   if (number.length <= firstPartLength) return `(${ddd}) ${number}`;
   return `(${ddd}) ${number.slice(0, firstPartLength)}-${number.slice(firstPartLength, firstPartLength + 4)}`;
 }
-export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, onResponsesChange }: { listId: string; weddingDate?: string | null; listStatus: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; onEventsChange?: (events: RsvpEvent[]) => void; onResponsesChange?: () => void }) {
+export function RsvpManager({ listId, weddingDate, listStatus, invitationUrl, onConfigureInvitation, onEventsChange, onResponsesChange }: { listId: string; weddingDate?: string | null; listStatus: 'DRAFT'|'PUBLISHED'|'ARCHIVED'; invitationUrl?: string|null; onConfigureInvitation?: () => void; onEventsChange?: (events: RsvpEvent[]) => void; onResponsesChange?: () => void }) {
   const toast = useToast();
   const [events, setEvents] = useState<RsvpEvent[]>([]);
   const [selected, setSelected] = useState('');
@@ -40,6 +52,14 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
   const [busy, setBusy] = useState(false);
   const [editingDeadline, setEditingDeadline] = useState(false);
   const [sendScopePrompt, setSendScopePrompt] = useState(false);
+  const [pendingSend, setPendingSend] = useState<(() => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    if (!invitationUrl || !pendingSend) return;
+    const action = pendingSend;
+    setPendingSend(null);
+    void action();
+  }, [invitationUrl, pendingSend]);
 
   async function loadEvents() {
     try {
@@ -138,6 +158,17 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
     try { const result = await api.sendRsvpGuest(selected, guest.id); toast.success(result.message); await loadGuests(selected); }
     catch (err) { toast.error((err as Error).message); await loadGuests(selected); }
   }
+  function requestSend(action: () => Promise<void>) {
+    if (!invitationUrl) { setPendingSend(() => action); return; }
+    void action();
+  }
+  async function copyGeneralInvitation(eventId: string) {
+    try {
+      const { url } = await api.rsvpGeneralInvitationLink(eventId);
+      await navigator.clipboard.writeText(url);
+      toast.success('Link geral do convite copiado.');
+    } catch (err) { toast.error((err as Error).message); }
+  }
   async function exportResponses() {
     if (!selected) return;
     try { await api.downloadRsvpExport(selected); toast.success('Arquivo XLSX exportado.'); } catch (err) { toast.error((err as Error).message); }
@@ -151,6 +182,7 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
   const confirmedGuests = countConfirmedGuests(responses ? [responses] : []);
   return <div className="rsvp-manager" id="rsvp-manager">
     {error && <div className="notice error" role="alert">{error}</div>}
+    {pendingSend && <section className="form-panel compact" role="alertdialog" aria-labelledby="missing-rsvp-invitation-title"><h3 id="missing-rsvp-invitation-title">URL do convite não cadastrada</h3><p>Cadastre a página do convite ou envie agora o link individual de RSVP diretamente.</p><div className="inline-actions"><button type="button" className="button secondary" onClick={() => onConfigureInvitation?.()}>Cadastrar URL do convite</button><button type="button" className="button" onClick={() => { const action = pendingSend; setPendingSend(null); void action?.(); }}>Enviar link de RSVP sem convite</button><button type="button" className="button ghost" onClick={() => setPendingSend(null)}>Cancelar</button></div></section>}
     <section className="form-panel">
       <h2>Confirmação de presença</h2>
       {event && <article className="rsvp-event-card selected">
@@ -179,20 +211,20 @@ export function RsvpManager({ listId, weddingDate, listStatus, onEventsChange, o
     </section>
 
     {event && <>
-      {event.mode === 'OPEN' && <section className="form-panel"><h2>Links da confirmação aberta</h2><p>Convidados informam o telefone na página pública para receber o link pelo WhatsApp.</p></section>}
-      {event.mode === 'RESERVED' && <>
+      {event.mode === 'OPEN' && <section className="form-panel"><h2>Link geral do convite</h2><p>Copie um link público para compartilhar. Quem abrir poderá consultar os presentes e pedir um link individual de RSVP pelo WhatsApp.</p>{invitationUrl ? <button type="button" className="button secondary" disabled={listStatus !== 'PUBLISHED' || !eventAcceptingResponses} onClick={() => void copyGeneralInvitation(event.id)}>Copiar link geral do evento</button> : <button type="button" className="button secondary" onClick={() => onConfigureInvitation?.()}>Cadastrar URL do convite</button>}</section>}
+      <>
         <div className="editor-grid">
           <form className="form-panel" onSubmit={addGuest}><h2>Adicionar convidado</h2><label>Nome<input name="guestName" required minLength={2} /></label><label>Telefone com DDD<input name="phone" type="tel" inputMode="numeric" autoComplete="tel" value={guestPhone} onChange={e => setGuestPhone(maskBrazilianPhone(e.target.value))} required pattern={'\\([0-9]{2}\\) [0-9]{4,5}-[0-9]{4}'} title="Digite um telefone com DDD, por exemplo (11) 99999-9999." placeholder="(11) 99999-9999" maxLength={15} /></label><h3>Limites de acompanhantes</h3>{event.companionGroups.map(group => <label key={group.key}>{group.label}<input name={`allowance_${group.key}`} type="number" min="0" max={group.maxCount} defaultValue={group.maxCount} required /></label>)}<button className="button secondary">Cadastrar convidado</button></form>
           <section className="form-panel"><h2>Importar convidados</h2><p>Use o modelo XLSX do evento ou uma planilha XLSX com nome, telefone, e-mail opcional e limites dos acompanhantes.</p><p className="fine-print">Telefone com DDD; sem código do país, o sistema assume +55. Os números nas colunas de acompanhantes definem o limite permitido para cada convidado.</p><button type="button" className="button secondary" onClick={() => void downloadGuestTemplate(event.id)}>Baixar modelo XLSX</button><p>Importe um arquivo XLSX. Revise a prévia; os links serão enviados quando a lista for publicada.</p><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={e => void previewFile(e.currentTarget.files?.[0])} />
             {preview && <><p>{preview.validRows.length} válidos de {preview.totalRows} linhas.</p>{preview.errors.length > 0 && <ul>{preview.errors.slice(0, 20).map((item, index) => <li key={`${item.row}-${index}`}>Linha {item.row}: {item.message}</li>)}</ul>}<button type="button" className="button secondary" disabled={!preview.validRows.length} onClick={() => void importPreview()}>Importar válidos</button></>}
           </section>
         </div>
-        <div className="inline-actions"><button type="button" className="button" disabled={busy || listStatus !== 'PUBLISHED' || !eventAcceptingResponses || guests.filter(guest => guest.source === 'RESERVED' && !guest.respondedAt && (!guest.whatsappStatus || guest.whatsappStatus === 'PENDING' || guest.whatsappStatus === 'FAILED')).length === 0} onClick={() => setSendScopePrompt(true)}>{busy ? 'Enviando…' : 'Enviar ou reenviar links pendentes'}</button><p className="fine-print">{listStatus !== 'PUBLISHED' ? 'Os links serão enviados quando você publicar a lista.' : !eventAcceptingResponses ? 'Abra a confirmação e confira se o prazo ainda está no futuro para enviar os links.' : 'O envio automático acontece na primeira publicação. Aqui você pode reenviar convidados pendentes ou com falha.'}</p></div>
-        {sendScopePrompt && <section className="form-panel compact" role="group" aria-label="Escolher convidados para envio"><h3>Quem deve receber o link?</h3><div className="inline-actions"><button type="button" className="button secondary" disabled={busy} onClick={() => void sendAll('NEW')}>Somente convidados novos</button><button type="button" className="button" disabled={busy} onClick={() => void sendAll('PENDING')}>Novos e pendentes, incluindo falhas</button><button type="button" className="button ghost" onClick={() => setSendScopePrompt(false)}>Cancelar</button></div></section>}
-      </>}
+        <div className="inline-actions"><button type="button" className="button" disabled={busy || listStatus !== 'PUBLISHED' || !eventAcceptingResponses || guests.filter(guest => guest.source === 'RESERVED' && !guest.respondedAt && (!guest.whatsappStatus || guest.whatsappStatus === 'PENDING' || guest.whatsappStatus === 'FAILED')).length === 0} onClick={() => setSendScopePrompt(true)}>{busy ? 'Enviando…' : 'Enviar ou reenviar convites pendentes'}</button><p className="fine-print">{listStatus !== 'PUBLISHED' ? 'Os convites serão enviados quando você publicar a lista.' : !eventAcceptingResponses ? 'Abra a confirmação e confira se o prazo ainda está no futuro para enviar os convites.' : 'O envio automático acontece na primeira publicação. Aqui você pode reenviar convidados pendentes ou com falha.'}</p></div>
+        {sendScopePrompt && <section className="form-panel compact" role="group" aria-label="Escolher convidados para envio"><h3>Quem deve receber o convite?</h3><div className="inline-actions"><button type="button" className="button secondary" disabled={busy} onClick={() => requestSend(() => sendAll('NEW'))}>Somente convidados novos</button><button type="button" className="button" disabled={busy} onClick={() => requestSend(() => sendAll('PENDING'))}>Novos e pendentes, incluindo falhas</button><button type="button" className="button ghost" onClick={() => setSendScopePrompt(false)}>Cancelar</button></div></section>}
+      </>
       <section className="form-panel"><h2>Convidados e respostas</h2>{guests.length === 0 ? <p className="muted">Nenhum convidado ou resposta neste evento.</p> : <div className="rsvp-guest-list">{guests.map(guest => <article className="guest-row rsvp-guest-row" key={guest.id}>
         <div><strong>{guest.guestName || 'Aguardando nome do convidado'}</strong><p>{guest.phoneE164 || 'RSVP legado sem telefone'} · {guest.attendance === 'YES' ? 'Vai comparecer' : guest.attendance === 'NO' ? 'Não poderá ir' : 'Sem resposta'}</p><p>{guest.respondedAt ? `Resposta: ${dateTime(guest.respondedAt)}` : guest.firstOpenedAt ? `Link aberto: ${dateTime(guest.firstOpenedAt)}` : guest.whatsappStatus === 'FAILED' ? 'Falha no envio; link pode ser reenviado' : guest.whatsappStatus === 'DELIVERED' ? 'Link entregue pelo WhatsApp' : guest.whatsappStatus === 'SENT' ? 'WhatsApp aceitou o link; aguardando entrega' : guest.whatsappStatus === 'PENDING' ? 'Envio pelo WhatsApp pendente' : 'Link ainda não enviado'}</p>{guest.whatsappStatus && <small>WhatsApp: {guest.whatsappStatus}</small>}</div>
-        {event.mode === 'RESERVED' && guest.source === 'RESERVED' && !guest.respondedAt && listStatus === 'PUBLISHED' && eventAcceptingResponses && <button type="button" className="button secondary small" onClick={() => void sendOne(guest)}>{guest.whatsappStatus ? 'Reenviar link' : 'Enviar link'}</button>}
+        {guest.source === 'RESERVED' && !guest.respondedAt && listStatus === 'PUBLISHED' && eventAcceptingResponses && <button type="button" className="button secondary small" onClick={() => requestSend(() => sendOne(guest))}>{guest.whatsappStatus ? 'Reenviar convite' : 'Enviar convite'}</button>}
       </article>)}</div>}</section>
       {responses && responses.items.length > 0 && <section className="form-panel"><div className="rsvp-response-heading"><h2>Respostas registradas</h2><button type="button" className="button secondary" onClick={() => void exportResponses()}>Exportar XLSX</button></div>{responses.items.map(response => <article className="guest-row" key={response.id}><div><strong>{response.guestName}</strong><p>{response.phoneE164} · {response.attendance === 'YES' ? 'Vai comparecer' : 'Não poderá ir'}</p><small>{Object.entries(response.companionCounts ?? {}).map(([key, value]) => `${key}: ${value}`).join(' · ')}</small></div><span>{dateTime(response.respondedAt)}</span></article>)}</section>}
     </>}
@@ -218,10 +250,25 @@ function OpenLinkRequest({ slug, event }: { slug: string; event: NonNullable<imp
 
 export function RsvpTokenPage() {
   const { token = '' } = useParams();
+  const [searchParams] = useSearchParams();
+  const eventIdHint = searchParams.get('eventId') ?? '';
   const [data, setData] = useState<PublicRsvpForm | null>(null);
   const toast = useToast(); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const [successMessage, setSuccessMessage] = useState('');
+  const [redirectSlug, setRedirectSlug] = useState<string | null>(null);
   const opened = useRef(false);
-  useEffect(() => { api.publicRsvp(token).then(setData).catch(err => setError((err as Error).message)); }, [token]);
+  useEffect(() => {
+    let active = true;
+    const cachedSlug = eventIdHint ? cachedAnsweredSlug(eventIdHint) : null;
+    if (cachedSlug) { setRedirectSlug(cachedSlug); return () => { active = false; }; }
+    api.publicRsvp(token).then(next => {
+      if (!active) return;
+      if (next.guest.attendance) {
+        cacheAnsweredEvent(next.event.id, next.listSlug);
+        setRedirectSlug(next.listSlug);
+      } else setData(next);
+    }).catch(err => { if (active) setError((err as Error).message); });
+    return () => { active = false; };
+  }, [token, eventIdHint]);
   useEffect(() => {
     if (!data || opened.current) return;
     const mark = () => { if (!opened.current && document.visibilityState === 'visible') { opened.current = true; void api.markRsvpOpened(token).catch(() => {}); } };
@@ -239,6 +286,7 @@ export function RsvpTokenPage() {
     const payload: SubmitRsvpInput = { attendance: String(form.get('attendance')) as 'YES'|'NO', companionCounts, customAnswers, ...(data.guest.source === 'OPEN' ? { guestName: String(form.get('guestName')) } : {}) };
     try {
       await api.submitRsvp(token, payload);
+      cacheAnsweredEvent(data.event.id, data.listSlug);
       const message = data.guest.attendance
         ? 'Sua resposta foi atualizada com sucesso.'
         : payload.attendance === 'YES' ? 'Presença confirmada com sucesso!' : 'Sua resposta foi registrada com sucesso.';
@@ -248,6 +296,7 @@ export function RsvpTokenPage() {
     catch (err) { toast.error((err as Error).message); }
     finally { setBusy(false); }
   }
+  if (redirectSlug) return <Navigate to={`/lista/${encodeURIComponent(redirectSlug)}`} replace />;
   if (error && !data) return <main className="auth-shell"><section className="auth-card"><h1>Link indisponível</h1><p>{error}</p><Link to="/">Voltar ao início</Link></section></main>;
   if (!data) return <main className="center">Carregando confirmação…</main>;
   return <main className="auth-shell">{successMessage && <SuccessRedirectModal title="Resposta registrada!" message={successMessage} to={`/lista/${encodeURIComponent(data.listSlug)}`} />}<Link className="brand" to="/">nosso <i>sim</i></Link><section className="auth-card rsvp-token-card"><span className="eyebrow">CONFIRMAÇÃO DE PRESENÇA</span><h1>{data.event.name}</h1><p>{data.coupleNames}{data.event.eventDate ? ` · ${dateTime(data.event.eventDate)}` : ''}</p>

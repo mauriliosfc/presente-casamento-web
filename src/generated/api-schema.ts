@@ -437,6 +437,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rsvp-events/{eventId}/invitation-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["RsvpEventsController_generalInvitationLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rsvp-events/{eventId}/guests/import/template": {
         parameters: {
             query?: never;
@@ -791,6 +807,8 @@ export interface components {
             title?: string;
             description?: string;
             weddingDate?: string | null;
+            /** Format: uri */
+            invitationUrl?: string | null;
             slug?: string;
         };
         ListStatusDto: {
@@ -1671,6 +1689,25 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RsvpEventsController_generalInvitationLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

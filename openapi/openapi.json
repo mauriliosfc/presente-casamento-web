@@ -950,6 +950,29 @@
         ]
       }
     },
+    "/rsvp-events/{eventId}/invitation-link": {
+      "get": {
+        "operationId": "RsvpEventsController_generalInvitationLink",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "rsvp-events"
+        ]
+      }
+    },
     "/rsvp-events/{eventId}/guests/import/template": {
       "get": {
         "operationId": "RsvpEventsController_importTemplate",
@@ -1641,6 +1664,12 @@
           "weddingDate": {
             "type": "string",
             "nullable": true
+          },
+          "invitationUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "format": "uri"
           },
           "slug": {
             "type": "string",

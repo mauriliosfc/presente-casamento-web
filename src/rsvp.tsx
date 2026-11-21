@@ -7,16 +7,19 @@ import { SuccessRedirectModal } from './success-redirect-modal';
 function toIso(value: string) { return value ? new Date(value).toISOString() : undefined; }
 function dateTime(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—'; }
 const RSVP_ANSWERED_CACHE_PREFIX = 'rsvp-answered:';
-function cachedAnsweredSlug(eventId: string) {
+function answeredCacheKey(eventId: string, token: string) {
+  return `${RSVP_ANSWERED_CACHE_PREFIX}${eventId}:${token}`;
+}
+function cachedAnsweredSlug(eventId: string, token: string) {
   try {
-    const value = localStorage.getItem(`${RSVP_ANSWERED_CACHE_PREFIX}${eventId}`);
+    const value = localStorage.getItem(answeredCacheKey(eventId, token));
     if (!value) return null;
     const parsed = JSON.parse(value) as { slug?: unknown };
     return typeof parsed.slug === 'string' ? parsed.slug : null;
   } catch { return null; }
 }
-function cacheAnsweredEvent(eventId: string, slug: string) {
-  try { localStorage.setItem(`${RSVP_ANSWERED_CACHE_PREFIX}${eventId}`, JSON.stringify({ slug })); } catch { /* Browser storage can be disabled. */ }
+function cacheAnsweredEvent(eventId: string, token: string, slug: string) {
+  try { localStorage.setItem(answeredCacheKey(eventId, token), JSON.stringify({ slug })); } catch { /* Browser storage can be disabled. */ }
 }
 export function countConfirmedGuests(responses: Array<Awaited<ReturnType<typeof api.rsvpResponses>>>) {
   return responses.reduce((total, response) => total + response.items.filter(item => item.respondedAt && item.attendance === 'YES').length, 0);
@@ -261,12 +264,12 @@ export function RsvpTokenPage() {
   const opened = useRef(false);
   useEffect(() => {
     let active = true;
-    const cachedSlug = eventIdHint ? cachedAnsweredSlug(eventIdHint) : null;
+    const cachedSlug = eventIdHint ? cachedAnsweredSlug(eventIdHint, token) : null;
     if (cachedSlug) { setRedirectSlug(cachedSlug); return () => { active = false; }; }
     api.publicRsvp(token).then(next => {
       if (!active) return;
       if (next.guest.attendance) {
-        cacheAnsweredEvent(next.event.id, next.listSlug);
+        cacheAnsweredEvent(next.event.id, token, next.listSlug);
         setRedirectSlug(next.listSlug);
       } else setData(next);
     }).catch(err => { if (active) setError((err as Error).message); });
@@ -289,7 +292,7 @@ export function RsvpTokenPage() {
     const payload: SubmitRsvpInput = { attendance: String(form.get('attendance')) as 'YES'|'NO', companionCounts, customAnswers, ...(data.guest.source === 'OPEN' ? { guestName: String(form.get('guestName')) } : {}) };
     try {
       await api.submitRsvp(token, payload);
-      cacheAnsweredEvent(data.event.id, data.listSlug);
+      cacheAnsweredEvent(data.event.id, token, data.listSlug);
       const message = data.guest.attendance
         ? 'Sua resposta foi atualizada com sucesso.'
         : payload.attendance === 'YES' ? 'Presença confirmada com sucesso!' : 'Sua resposta foi registrada com sucesso.';
